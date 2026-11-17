@@ -1,0 +1,57 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Archipelago ${{ matrix.archipelago }}, Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        archipelago: ["0.6.8"]
+        python: ["3.12"]
+    steps:
+      - name: This world
+        uses: actions/checkout@v6.0.2
+        with:
+          path: world
+
+      - name: Archipelago ${{ matrix.archipelago }}
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: ArchipelagoMW/Archipelago
+          ref: ${{ matrix.archipelago }}
+          path: Archipelago
+
+      - name: Python ${{ matrix.python }}
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Put the world into Archipelago
+        run: cp -r world/worlds/banjo_kazooie Archipelago/worlds/
+
+      - name: Archipelago's dependencies
+        working-directory: Archipelago
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ci-requirements.txt
+          python ModuleUpdate.py --yes --force
+          python Launcher.py --update_settings
+
+      - name: The world's tests
+        working-directory: Archipelago
+        run: python -m pytest worlds/banjo_kazooie -q
+
+      - name: Archipelago's general tests, on this world
+        working-directory: Archipelago
+        env:
+          AP_TEST_WORLDS: banjo_kazooie
+        run: python -m pytest test/general -q

@@ -1,0 +1,3 @@
+# The patch files and the EmuLoader copy are checked by their hash: never convert their line endings
+worlds/banjo_kazooie/assets/** -text
+worlds/banjo_kazooie/emu_loader/** -text
